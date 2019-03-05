@@ -62,11 +62,22 @@ shapley(simple, c("A", "B"), silent = TRUE)
 ```
 
 As expected, the marginal contributions of the two factors are 1 and 2, respectively.
-For factor "A", the underlying computation is:
+For factor "A", we can manually compute the contribution as follows:
 
 ``` {r}
 1/2 * (simple("A") - simple()) + 1/2 * (simple(c("A", "B")) - simple("B"))
 ```
+
+For factor "B":
+
+``` {r}
+1/2 * (simple("B") - simple()) + 1/2 * (simple(c("B", "A")) - simple("A"))
+```
+
+Across the two computations, most terms occur twice. Also note that
+`simple(c("A", "B")) == simple(c("B", "A"))`. The `shapley` function only calculates each term
+once, and then caches the result. This leads to great speed improvements once we consider
+a greater number of factors.
 
 ### Example 1: Game theory
 
