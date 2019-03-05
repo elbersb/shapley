@@ -1,0 +1,18 @@
+Package: shapley
+Type: Package
+Title: Compute Shapley-Shorrocks Value Decompositions
+Version: 0.1.0
+Authors@R: person("Benjamin", "Elbers", email = "be2239@columbia.edu",
+  role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5392-3448"))
+Description: Compute Shapley-Shorrocks Value Decompositions.
+License: MIT + file LICENSE
+Encoding: UTF-8
+URL: http://github.com/elbersb/shapley
+BugReports: http://github.com/elbersb/shapley/issues
+LazyData: true
+Imports: arrangements
+Suggests:
+    testthat,
+    covr,
+    lintr
+RoxygenNote: 6.1.1

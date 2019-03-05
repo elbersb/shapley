@@ -1,0 +1,7 @@
+^codecov\.yml$
+^\.travis\.yml$
+^cran-comments\.md$
+^LICENSE\.md$
+^README\.Rmd$
+^.*\.Rproj$
+^\.Rproj\.user$
