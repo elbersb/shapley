@@ -3,7 +3,7 @@
 #'
 #' @param vfun A value function.
 #' @param factors A vector of factors, passed to \code{vfun}.
-#' @param silent If FALSE (the default), prints a progress bar for each factor.
+#' @param silent If FALSE (the default), prints a progress bar.
 #' @return Returns a data frame with N rows, where N is the number of factors.
 #' @references
 #' Shapley, L. S. (1953). A value for n-person games.
@@ -18,9 +18,9 @@ shapley <- function(vfun, factors, silent = FALSE) {
     cache <- new.env(hash = TRUE, parent = emptyenv())
     get_vfun <- function(indices) {
         if (length(indices) == 0) {
-            key <- "NONE"
+            key <- "0"
         } else {
-            key <- paste0(sort(indices), collapse = "")
+            key <- paste0(sort.int(indices, method = "quick"), collapse = "")
         }
         if (exists(key, envir = cache)) {
             get(key, envir = cache)
@@ -35,25 +35,21 @@ shapley <- function(vfun, factors, silent = FALSE) {
     P <- arrangements::permutations(n_factors, n_factors)
     means <- list()
 
+    if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
     for (factor in 1:n_factors) {
-        if (!silent) pb <- utils::txtProgressBar(min = 0, max = nrow(P), style = 3)
-        values <- c()
-
-        for (ordering in 1:nrow(P)) {
-            if (!silent) utils::setTxtProgressBar(pb, ordering)
-
-            ix <- which(P[ordering, ] == factor)
+        values <- apply(P, 1, function(row) {
+            ix <- which(row == factor)
             if (ix == 1) {
                 preceding <- c()
             } else {
-                preceding <- P[ordering, 1:(ix - 1)]
+                preceding <- row[1:(ix - 1)]
             }
-            values <- c(values, get_vfun(c(factor, preceding)) - get_vfun(preceding))
-        }
-        if (!silent) close(pb)
-
+            get_vfun(c(factor, preceding)) - get_vfun(preceding)
+        })
         means[[factor]] <- mean(values)
+        if (!silent) utils::setTxtProgressBar(pb, factor)
     }
+    if (!silent) close(pb)
 
     data.frame(factor = factors, value = unlist(means))
 }

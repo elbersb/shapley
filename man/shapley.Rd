@@ -11,7 +11,7 @@ shapley(vfun, factors, silent = FALSE)
 
 \item{factors}{A vector of factors, passed to \code{vfun}.}
 
-\item{silent}{If FALSE (the default), prints a progress bar for each factor.}
+\item{silent}{If FALSE (the default), prints a progress bar.}
 }
 \value{
 Returns a data frame with N rows, where N is the number of factors.
