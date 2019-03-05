@@ -25,3 +25,15 @@ test_that("airport problem", {
     results <- shapley(airport, c("A", "B", "C", "D"))
     expect_equal(results$value, c(2, 3, 4, 9))
 })
+
+test_that("silent", {
+    simple <- function(factors = c()) {
+        value <- 0
+        if ("A" %in% factors) value <- value + 1
+        if ("B" %in% factors) value <- value + 2
+        return(value)
+    }
+
+    expect_silent(shapley(simple, c("A", "B"), silent = TRUE))
+    expect_output(shapley(simple, c("A", "B"), silent = FALSE))
+})
