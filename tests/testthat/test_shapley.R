@@ -12,6 +12,17 @@ test_that("glove game", {
     expect_equal(results$value, c(1 / 6, 1 / 6, 4 / 6))
 })
 
+test_that("glove game - different return name", {
+    # https://en.wikipedia.org/wiki/Shapley_value#Glove_game
+    glove <- function(factors) {
+        if (length(factors) > 1 & 3 %in% factors) return(1)
+        return(0)
+    }
+
+    results <- shapley(glove, c(1, 2, 3), outcomes = "contribution")
+    expect_equal(results$contribution, c(1 / 6, 1 / 6, 4 / 6))
+})
+
 test_that("airport problem", {
     # https://en.wikipedia.org/wiki/Airport_problem
     airport <- function(factors) {
@@ -36,4 +47,24 @@ test_that("silent", {
 
     expect_silent(shapley(simple, c("A", "B"), silent = TRUE))
     expect_output(shapley(simple, c("A", "B"), silent = FALSE))
+})
+
+test_that("two return values", {
+    reg <- function(regressors) {
+        if (length(regressors) == 0) return(c(0, 0))
+        formula <- paste0("mpg ~ ", paste(regressors, collapse = "+"))
+        m <- lm(formula, data = mtcars)
+        c(summary(m)$r.squared, summary(m)$adj.r.squared)
+    }
+
+    expect_error(shapley(reg, c("wt", "qsec", "am"), silent = FALSE))
+    expect_error(shapley(reg, c("wt", "qsec", "am"), silent = TRUE))
+
+    # working two return values
+    results <- shapley(reg, c("wt", "qsec", "am"), outcomes = c("r2", "adjr2"), silent = TRUE)
+    expect_equal(nrow(results), 3)
+    expect_equal(ncol(results), 3)
+    expect_equal(names(results), c("factor", "r2", "adjr2"))
+    expect_equal(round(results$r2, 2), c(.48, .16, .21))
+    expect_equal(sum(results$r2), reg(c("wt", "qsec", "am"))[[1]])
 })

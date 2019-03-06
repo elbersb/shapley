@@ -4,12 +4,14 @@
 \alias{shapley}
 \title{Compute Shapley-Shorrocks Value Decompositions}
 \usage{
-shapley(vfun, factors, silent = FALSE)
+shapley(vfun, factors, outcomes = "value", silent = FALSE)
 }
 \arguments{
 \item{vfun}{A value function.}
 
 \item{factors}{A vector of factors, passed to \code{vfun}.}
+
+\item{outcomes}{Column names for outcome values (usually this is only one).}
 
 \item{silent}{If FALSE (the default), prints a progress bar.}
 }

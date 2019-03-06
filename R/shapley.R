@@ -3,6 +3,7 @@
 #'
 #' @param vfun A value function.
 #' @param factors A vector of factors, passed to \code{vfun}.
+#' @param outcomes Column names for outcome values (usually this is only one).
 #' @param silent If FALSE (the default), prints a progress bar.
 #' @return Returns a data frame with N rows, where N is the number of factors.
 #' @references
@@ -14,7 +15,7 @@
 #'      a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
 #' @import arrangements
 #' @export
-shapley <- function(vfun, factors, silent = FALSE) {
+shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
     cache <- new.env(hash = TRUE, parent = emptyenv())
     get_vfun <- function(indices) {
         if (length(indices) == 0) {
@@ -26,6 +27,10 @@ shapley <- function(vfun, factors, silent = FALSE) {
             get(key, envir = cache)
         } else {
             res <- vfun(factors[indices])
+            if (length(res) != length(outcomes)) {
+                if (!silent) close(pb)
+                stop("vfun returned a different number of values than defined in outcomes")
+            }
             assign(key, res, envir = cache)
             res
         }
@@ -46,10 +51,19 @@ shapley <- function(vfun, factors, silent = FALSE) {
             }
             get_vfun(c(factor, preceding)) - get_vfun(preceding)
         })
-        means[[factor]] <- mean(values)
+        if (is.matrix(values)) {
+            means[[factor]] <- apply(values, 1, mean)
+        } else {
+            means[[factor]] <- mean(values)
+        }
         if (!silent) utils::setTxtProgressBar(pb, factor)
     }
     if (!silent) close(pb)
 
-    data.frame(factor = factors, value = unlist(means))
+    m <- matrix(unlist(means), nrow = n_factors, byrow = TRUE)
+    df <- data.frame(factor = factors)
+    for (var in 1:length(outcomes)) {
+        df[, outcomes[var]] <- m[, var]
+    }
+    df
 }
