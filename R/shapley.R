@@ -21,7 +21,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
         if (length(indices) == 0) {
             key <- "0"
         } else {
-            key <- paste0(sort.int(indices, method = "quick"), collapse = "")
+            key <- paste0(indices, collapse = "")
         }
         if (exists(key, envir = cache)) {
             get(key, envir = cache)
@@ -42,14 +42,19 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
 
     if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
     for (factor in 1:n_factors) {
-        values <- apply(P, 1, function(row) {
+        preceding <- apply(P, 1, function(row) {
             ix <- which(row == factor)
             if (ix == 1) {
-                preceding <- c()
+                factor
             } else {
-                preceding <- row[1:(ix - 1)]
+                row[1:ix]
             }
-            get_vfun(c(factor, preceding)) - get_vfun(preceding)
+        })
+        preceding <- preceding[lengths(preceding) != 0]
+        preceding <- lapply(preceding, sort.int)
+
+        values <- sapply(preceding, function(fs) {
+            get_vfun(fs) - get_vfun(fs[fs != factor])
         })
         if (is.matrix(values)) {
             means[[factor]] <- apply(values, 1, mean)
