@@ -53,8 +53,8 @@ test_that("two return values", {
     reg <- function(regressors) {
         if (length(regressors) == 0) return(c(0, 0))
         formula <- paste0("mpg ~ ", paste(regressors, collapse = "+"))
-        m <- lm(formula, data = mtcars)
-        c(summary(model)[["r.squared"]], summary(model)[["adj.r.squared"]])
+        m <- summary(lm(formula, data = mtcars))
+        c(m[["r.squared"]], m[["adj.r.squared"]])
     }
 
     expect_error(shapley(reg, c("wt", "qsec", "am"), silent = FALSE))
