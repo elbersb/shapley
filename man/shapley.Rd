@@ -4,7 +4,7 @@
 \alias{shapley}
 \title{Compute Shapley-Shorrocks Value Decompositions}
 \usage{
-shapley(vfun, factors, outcomes = "value", silent = FALSE)
+shapley(vfun, factors, outcomes = "value", silent = FALSE, ...)
 }
 \arguments{
 \item{vfun}{A value function.}
@@ -14,6 +14,8 @@ shapley(vfun, factors, outcomes = "value", silent = FALSE)
 \item{outcomes}{Column names for outcome values (usually this is only one).}
 
 \item{silent}{If FALSE (the default), prints a progress bar.}
+
+\item{...}{Additional arguments passed to \code{vfun}.}
 }
 \value{
 Returns a data frame with N rows, where N is the number of factors.

@@ -1,3 +1,5 @@
+collapse <- function(x) paste0(x, collapse = "")
+
 #' Compute Shapley-Shorrocks Value Decompositions
 #'
 #'
@@ -5,6 +7,7 @@
 #' @param factors A vector of factors, passed to \code{vfun}.
 #' @param outcomes Column names for outcome values (usually this is only one).
 #' @param silent If FALSE (the default), prints a progress bar.
+#' @param ... Additional arguments passed to \code{vfun}.
 #' @return Returns a data frame with N rows, where N is the number of factors.
 #' @references
 #' Shapley, L. S. (1953). A value for n-person games.
@@ -15,10 +18,11 @@
 #'      a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
 #' @import arrangements
 #' @export
-shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
+shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
     cache <- new.env(hash = TRUE, parent = emptyenv())
     get_vfun <- function(indices) {
         if (length(indices) == 0) {
+            # environments allow only character keys
             key <- "0"
         } else {
             key <- paste0(indices, collapse = "")
@@ -26,7 +30,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
         if (exists(key, envir = cache)) {
             get(key, envir = cache)
         } else {
-            res <- vfun(factors[indices])
+            res <- vfun(unlist(factors)[indices], ...)
             if (length(res) != length(outcomes)) {
                 if (!silent) close(pb)
                 stop("vfun returned a different number of values than defined in outcomes")
@@ -36,11 +40,34 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
         }
     }
 
-    n_factors <- length(factors)
-    P <- arrangements::permutations(n_factors, n_factors)
+    if (is.list(factors)) {
+        # Owen values
+        n_factors <- length(unlist(factors))
+        groups <- split(1:n_factors, rep(1:length(factors), lengths(factors)))
+        stopifnot(all(lengths(groups) == lengths(factors)))
+        P <- arrangements::permutations(n_factors, n_factors)
+
+        # remove permutations where groups are not bunched together
+        # i.e. if 1 and 2 are in a group, allow {1,2,3} or {2,1,3}, but not {1,3,2}
+        for (group in groups) {
+            if (length(group) == 1) next
+            # find all possible permutations, and use a regex to find all instances
+            groupP <- arrangements::permutations(group, length(group))
+            regex <- paste0(apply(groupP, 1, collapse), collapse = "|")
+
+            P <- P[grepl(regex, apply(P, 1, collapse)), ]
+        }
+    } else {
+        # normal Shapley decomposition
+        n_factors <- length(factors)
+        P <- arrangements::permutations(n_factors, n_factors)
+    }
+
     means <- list()
 
+    if (!silent) message(paste("N ranks:", nrow(P)))
     if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
+
     for (factor in 1:n_factors) {
         preceding <- apply(P, 1, function(row) {
             ix <- which(row == factor)
@@ -50,25 +77,37 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE) {
                 row[1:ix]
             }
         })
-        preceding <- preceding[lengths(preceding) != 0]
+        # sort here, so it's not required further down
+        # sorting ensures that cases like 01 and 10 are not computed twice
         preceding <- lapply(preceding, sort.int)
 
         values <- sapply(preceding, function(fs) {
             get_vfun(fs) - get_vfun(fs[fs != factor])
         })
         if (is.matrix(values)) {
+            # in case of >1 return values of vfun
             means[[factor]] <- apply(values, 1, mean)
         } else {
+            # in case of 1 return value of vfun
             means[[factor]] <- mean(values)
         }
         if (!silent) utils::setTxtProgressBar(pb, factor)
     }
     if (!silent) close(pb)
 
+    if (is.list(factors)) {
+        group_indices <- rep(names(groups), lengths(groups))
+        df <- data.frame(group = as.numeric(group_indices),
+            factor = unlist(factors))
+    } else {
+        df <- data.frame(factor = factors)
+    }
+
+    # add values
     m <- matrix(unlist(means), nrow = n_factors, byrow = TRUE)
-    df <- data.frame(factor = factors)
     for (var in 1:length(outcomes)) {
         df[, outcomes[var]] <- m[, var]
     }
+
     df
 }
