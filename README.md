@@ -329,8 +329,8 @@ shapley(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = incom
 
 Using this notation, we have grouped `Tax1` and `Tax2` together in one
 group, while `Transfer` is a group in itself. The results now line up
-with the results of the Shapley decomposition, where the taxes were
-jointly entered as a single factor.
+with the results of the Shapley decomposition above, where the taxes
+were jointly entered as a single factor.
 
 Note that the hierarchical procedure can also be used as an effective
 tool to increase the speed of computation when a large number of factors

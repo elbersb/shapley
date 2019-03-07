@@ -45,31 +45,31 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         n_factors <- length(unlist(factors))
         groups <- split(1:n_factors, rep(1:length(factors), lengths(factors)))
         stopifnot(all(lengths(groups) == lengths(factors)))
-        P <- arrangements::permutations(n_factors, n_factors)
+        perms <- arrangements::permutations(n_factors, n_factors)
 
         # remove permutations where groups are not bunched together
         # i.e. if 1 and 2 are in a group, allow {1,2,3} or {2,1,3}, but not {1,3,2}
         for (group in groups) {
             if (length(group) == 1) next
             # find all possible permutations, and use a regex to find all instances
-            groupP <- arrangements::permutations(group, length(group))
-            regex <- paste0(apply(groupP, 1, collapse), collapse = "|")
+            group_perms <- arrangements::permutations(group, length(group))
+            regex <- paste0(apply(group_perms, 1, collapse), collapse = "|")
 
-            P <- P[grepl(regex, apply(P, 1, collapse)), ]
+            perms <- perms[grepl(regex, apply(perms, 1, collapse)), ]
         }
     } else {
         # normal Shapley decomposition
         n_factors <- length(factors)
-        P <- arrangements::permutations(n_factors, n_factors)
+        perms <- arrangements::permutations(n_factors, n_factors)
     }
 
     means <- list()
 
-    if (!silent) message(paste("N ranks:", nrow(P)))
+    if (!silent) message(paste("N ranks:", nrow(perms)))
     if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
 
     for (factor in 1:n_factors) {
-        preceding <- apply(P, 1, function(row) {
+        preceding <- apply(perms, 1, function(row) {
             ix <- which(row == factor)
             if (ix == 1) {
                 factor
