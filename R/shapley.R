@@ -45,18 +45,25 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         n_factors <- length(unlist(factors))
         groups <- split(1:n_factors, rep(1:length(factors), lengths(factors)))
         stopifnot(all(lengths(groups) == lengths(factors)))
-        perms <- arrangements::permutations(n_factors, n_factors)
 
-        # remove permutations where groups are not bunched together
-        # i.e. if 1 and 2 are in a group, allow {1,2,3} or {2,1,3}, but not {1,3,2}
-        for (group in groups) {
-            if (length(group) == 1) next
-            # find all possible permutations, and use a regex to find all instances
-            group_perms <- arrangements::permutations(group, length(group))
-            regex <- paste0(apply(group_perms, 1, collapse), collapse = "|")
+        # get all permutations *within* groups
+        group_perms <- lapply(groups, function(g) arrangements::permutations(g, length(g)))
+        # then only the groups "play" against each other
+        perms <- arrangements::permutations(1:length(groups), length(groups))
+        expand.grid.df <- function(...) Reduce(function(...) merge(..., by = NULL), ...)
 
-            perms <- perms[grepl(regex, apply(perms, 1, collapse)), ]
-        }
+        # the perms matrix indicates group indices, adjust and then expand the two matrices
+        perms <- lapply(1:nrow(perms), function(i_row) {
+            row <- perms[i_row, ]
+            l <- vector(mode = "list", length = length(group_perms))
+            for (i in 1:length(row)) {
+                l[[i]] <- group_perms[[row[i]]]
+            }
+            m <- as.matrix(expand.grid.df(l))
+            dimnames(m) <- NULL
+            m
+        })
+        perms <- do.call(rbind, perms)
     } else {
         # normal Shapley decomposition
         n_factors <- length(factors)
