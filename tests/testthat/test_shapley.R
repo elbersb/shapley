@@ -74,9 +74,9 @@ test_that("additional arguments to vfun", {
         # simplified from package ineq
         n <- length(x)
         x <- sort(x)
-        G <- sum(x * 1L:n)
-        G <- 2 * G / sum(x) - (n + 1L)
-        G / n
+        g <- sum(x * 1L:n)
+        g <- 2 * g / sum(x) - (n + 1L)
+        g / n
     }
 
     zid <- function(factors, data) {

@@ -46,11 +46,11 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         groups <- split(1:n_factors, rep(1:length(factors), lengths(factors)))
         stopifnot(all(lengths(groups) == lengths(factors)))
 
-        # get all permutations *within* groups
-        group_perms <- lapply(groups, function(g) arrangements::permutations(g, length(g)))
+        # get all permutations *within* groups (give as vector)
+        group_perms <- lapply(groups, function(g) arrangements::permutations(v = g, length(g)))
         # then only the groups "play" against each other
-        perms <- arrangements::permutations(1:length(groups), length(groups))
-        expand.grid.df <- function(...) Reduce(function(...) merge(..., by = NULL), ...)
+        perms <- arrangements::permutations(v = 1:length(groups), length(groups))
+        expand_grid_df <- function(...) Reduce(function(...) merge(..., by = NULL), ...)
 
         # the perms matrix indicates group indices, adjust and then expand the two matrices
         perms <- lapply(1:nrow(perms), function(i_row) {
@@ -59,7 +59,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
             for (i in 1:length(row)) {
                 l[[i]] <- group_perms[[row[i]]]
             }
-            m <- as.matrix(expand.grid.df(l))
+            m <- as.matrix(expand_grid_df(l))
             dimnames(m) <- NULL
             m
         })
