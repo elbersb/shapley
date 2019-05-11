@@ -4,7 +4,10 @@ collapse <- function(x) paste0(x, collapse = "")
 #'
 #'
 #' @param vfun A value function.
-#' @param factors A vector of factors, passed to \code{vfun}.
+#' @param factors A vector of factors, passed to \code{vfun}. Owen value decomposition can be
+#'  can be achieved by passing a list of vectors, where then each item of the list is treated
+#'  as one group. This list also can contain further lists, defining subgroups. Only two levels
+#'  of nesting are currently supported.
 #' @param outcomes Column names for outcome values (usually this is only one).
 #' @param silent If FALSE (the default), prints a progress bar.
 #' @param ... Additional arguments passed to \code{vfun}.
@@ -42,9 +45,11 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 
     if (is.list(factors)) {
         # Owen values
-        n_factors <- length(unlist(factors))
-        groups <- split(1:n_factors, rep(1:length(factors), lengths(factors)))
-        stopifnot(all(lengths(groups) == lengths(factors)))
+        i_factors <- unlist(factors)
+        n_factors <- length(i_factors)
+        # group size - this takes into account that there might be subgroups
+        group_size <- sapply(1:length(factors), function(i) length(unlist(factors[[i]])))
+        groups <- split(1:n_factors, rep(1:length(factors), group_size))
 
         # get all permutations *within* groups (give as vector)
         group_perms <- lapply(groups, function(g) arrangements::permutations(v = g, length(g)))
@@ -64,6 +69,23 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
             m
         })
         perms <- do.call(rbind, perms)
+
+        # now take care of subgroups
+        # not the most elegant way to do it, but it works
+        subgroups <- factors[sapply(1:length(factors), function(i) is.list(factors[[i]]))]
+        subgroups <- unlist(subgroups, recursive = FALSE)
+        more_subgroups <- sapply(1:length(subgroups), function(i) is.list(subgroups[[i]]))
+        if (sum(more_subgroups) > 0)
+            stop("nesting of more than two levels not supported")
+        subgroups <- lapply(subgroups, function(sg) which(i_factors %in% sg))
+        for (sg in subgroups) {
+            if (length(sg) == 1) next
+            # find all possible permutations, and use a regex to find all instances
+            group_perms <- arrangements::permutations(sg, length(sg))
+            regex <- paste0(apply(group_perms, 1, collapse), collapse = "|")
+
+            perms <- perms[grepl(regex, apply(perms, 1, collapse)), ]
+        }
     } else {
         # normal Shapley decomposition
         n_factors <- length(factors)
@@ -103,9 +125,34 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
     if (!silent) close(pb)
 
     if (is.list(factors)) {
-        group_indices <- rep(names(groups), lengths(groups))
-        df <- data.frame(group = as.numeric(group_indices),
-            factor = unlist(factors))
+        group_indices <- as.numeric(rep(names(groups), lengths(groups)))
+        if (length(subgroups) == 0) {
+            df <- data.frame(group = group_indices,
+                factor = unlist(factors))
+        } else {
+            # not the most elegant way to do it, but it works
+            subgroup_indices <- group_indices * 10
+            i_group <- 0
+            ix <- 1
+            for (group in factors) {
+                i_group <- i_group + 1
+                if (is.list(group)) {
+                    i_subgroup <- 0
+                    for (sg in group) {
+                        i_subgroup <- i_subgroup + 1
+                        subgroup_indices[ix:(ix - 1 + length(sg))] <-
+                            group_indices[ix] * 10 + i_subgroup
+                        ix <- ix + length(sg)
+                    }
+                } else {
+                    ix <- ix + length(group)
+                }
+            }
+
+            df <- data.frame(group = group_indices,
+                subgroup = subgroup_indices,
+                factor = unlist(factors))
+        }
     } else {
         df <- data.frame(factor = factors)
     }

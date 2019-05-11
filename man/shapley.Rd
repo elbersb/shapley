@@ -9,7 +9,10 @@ shapley(vfun, factors, outcomes = "value", silent = FALSE, ...)
 \arguments{
 \item{vfun}{A value function.}
 
-\item{factors}{A vector of factors, passed to \code{vfun}.}
+\item{factors}{A vector of factors, passed to \code{vfun}. Owen value decomposition can be
+can be achieved by passing a list of vectors, where then each item of the list is treated
+as one group. This list also can contain further lists, defining subgroups. Only two levels
+of nesting are currently supported.}
 
 \item{outcomes}{Column names for outcome values (usually this is only one).}
 

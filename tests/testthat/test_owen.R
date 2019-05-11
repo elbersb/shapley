@@ -37,18 +37,20 @@ test_that("rego example", {
     expect_equal(res$value, c(.33, .165 + .225))
 })
 
-test_that("regression example", {
-    reg <- function(regressors) {
-        if (length(regressors) == 0) return(0)
-        formula <- paste0("mpg ~ ", paste(regressors, collapse = "+"))
-        m <- summary(lm(formula, data = mtcars))
-        m[["r.squared"]]
-    }
+reg <- function(regressors) {
+    if (length(regressors) == 0) return(0)
+    formula <- paste0("mpg ~ ", paste(regressors, collapse = "+"))
+    m <- summary(lm(formula, data = mtcars))
+    m[["r.squared"]]
+}
 
+test_that("regression example", {
     # all groups only one factor
     expect_equal(
         shapley(reg, c("cyl", "disp", "hp"), silent = TRUE)$value,
         shapley(reg, list("cyl", "disp", "hp"), silent = TRUE)$value)
+
+    shapley(reg, list("cyl", list("disp"), "hp"), silent = TRUE)
 
     # three groups
     ungrouped <- shapley(reg, c("cyl", "disp", "hp", "drat", "wt", "qsec"),
@@ -62,4 +64,42 @@ test_that("regression example", {
     expect_equal(sum(with_groups$value[1]), supergroups$value[[1]])
     expect_equal(sum(with_groups$value[2:4]), supergroups$value[[2]])
     expect_equal(sum(with_groups$value[5:6]), supergroups$value[[3]])
+})
+
+test_that("Owen with two levels", {
+    expect_equal(
+        shapley(reg, c("cyl", "disp", "hp"), silent = TRUE)$value,
+        shapley(reg, list("cyl", list("disp"), "hp"), silent = TRUE)$value)
+
+    supergroups <- shapley(reg, c("cyl", "disp+hp+drat", "gear+wt+qsec"),
+        silent = TRUE)
+    two_levels <- shapley(reg,
+            list("cyl",
+                 list("disp", c("hp", "drat")),
+                 list("gear", c("wt", "qsec"))),
+        silent = TRUE)
+    expect_equal(sum(supergroups$value), sum(two_levels$value))
+    expect_equal(supergroups$value[1], two_levels$value[[1]])
+    expect_equal(supergroups$value[2], sum(two_levels$value[2:4]))
+    expect_equal(supergroups$value[3], sum(two_levels$value[5:7]))
+
+    supergroups2 <- shapley(reg, list("cyl", list("disp", "hp+drat"), list("gear", "wt+qsec")),
+        silent = TRUE)
+    expect_equal(supergroups2$value[1], two_levels$value[[1]])
+    expect_equal(supergroups2$value[2], two_levels$value[[2]])
+    expect_equal(supergroups2$value[3], sum(two_levels$value[3:4]))
+    expect_equal(supergroups2$value[4], two_levels$value[[5]])
+    expect_equal(supergroups2$value[5], sum(two_levels$value[6:7]))
+})
+
+test_that("Three levels", {
+    # this is ok
+    shapley(function(x) 1, list(
+        list(c(1, 2, 3), c(4)),
+        c(5, 6)), silent = TRUE)
+
+    # this is not ok (grouping 2, 3 in their own sub-sub-group)
+    expect_error(shapley(function(x) 1, list(
+        list(list(1, list(2, 3)), c(4)),
+        list(5, 6)), silent = TRUE))
 })
