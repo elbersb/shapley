@@ -21,6 +21,11 @@ same – it is just the concrete value function that varies. This package
 provides a simple algorithm for the Shapley value decomposition, and
 also supports hierarchical decomposition using the Owen value.
 
+The key advantage of the Shapley decomposition framework is the
+connection with counterfactuals: Once appropriate counterfactuals for
+each combination of factors have been identified, the method will
+produce an appropriate decomposition.
+
 ## Installation
 
 ``` r
@@ -316,8 +321,7 @@ decomposition (Owen 1977). (An alternative is the Nested Shapley
 decomposition recommended by Sastre and Trannoy (2002), which introduces
 a new set of problems, though.) The `shapley` package allows the
 computation of Owen values by specifying the group structure using a
-list of
-vectors:
+list of vectors:
 
 ``` r
 shapley(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = income2)
@@ -342,25 +346,25 @@ permutations that need to be calculated for each factor is only 2\! \*
 
 ## References
 
-Enami, A., N. Lustig, and R. Aranda (2018). Analytic Foundations:
+Enami, A., N. Lustig, and R. Aranda. 2018. Analytic Foundations:
 Measuring the Redistributive Impact of Taxes and Transfers. In: N.
-Lustig (Ed.), Commitment to Equity Handbook. Estimating the Impact of
-Fiscal Policy on Inequality and Poverty, Washington, D.C.: Brookings,
+Lustig (Ed.), *Commitment to Equity Handbook. Estimating the Impact of
+Fiscal Policy on Inequality and Poverty*, Washington, D.C.: Brookings,
 56-115.
 
-Owen, G. (1977). Values of Games with a Priori Unions. In: R. Henn and
-O. Moeschlin (Eds.): Mathematical Economics and Game Theory, Berlin and
+Owen, G. 1977. Values of Games with a Priori Unions. In: R. Henn and O.
+Moeschlin (Eds.), *Mathematical Economics and Game Theory*, Berlin and
 Heidelberg: Springer, 76-88.
 
-Sastre, M. and A. Trannoy (2002). Shapley Inequality Decomposition by
-Factor Components: Some Methodological Issues. Journal of Economics
+Sastre, M. and A. Trannoy. 2002. Shapley Inequality Decomposition by
+Factor Components: Some Methodological Issues. *Journal of Economics*
 77(1): 51-89. <https://doi.org/10.1007/BF03052500>
 
-Shapley, L. S. (1953). A value for n-person games. In: A. W. Tucker and
-H. W. Kuhn (Eds.), Contributions to the theory of games (Vol. II),
+Shapley, L. S. 1953. A value for n-person games. In: A. W. Tucker and H.
+W. Kuhn (Eds.), *Contributions to the theory of games (Vol. II)*,
 Princeton: Princeton University Press, 307–317.
 
-Shorrocks, A. F. (2013). Decomposition procedures for distributional
-analysis: a unified framework based on the Shapley value. Journal of
-Economic Inequality 11: 1-28.
+Shorrocks, A. F. 2013. Decomposition procedures for distributional
+analysis: a unified framework based on the Shapley value. *Journal of
+Economic Inequality* 11: 1-28.
 <https://doi.org/10.1007/s10888-011-9214-z>
