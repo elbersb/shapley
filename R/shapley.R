@@ -23,7 +23,7 @@ collapse <- function(x) paste0(x, collapse = "")
 #' @export
 shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
     cache <- new.env(hash = TRUE, parent = emptyenv())
-    get_vfun <- function(indices) {
+    get_from_cache <- function(indices) {
         if (length(indices) == 0) {
             # environments allow only character keys
             key <- "0"
@@ -52,6 +52,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         groups <- split(1:n_factors, rep(1:length(factors), group_size))
 
         # get all permutations *within* groups (give as vector)
+        # TODO: this doesnt work if these are large - have to use different approach here
         group_perms <- lapply(groups, function(g) arrangements::permutations(v = g, length(g)))
         # then only the groups "play" against each other
         perms <- arrangements::permutations(v = 1:length(groups), length(groups))
@@ -111,7 +112,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         preceding <- lapply(preceding, sort.int)
 
         values <- sapply(preceding, function(fs) {
-            get_vfun(fs) - get_vfun(fs[fs != factor])
+            get_from_cache(fs) - get_from_cache(fs[fs != factor])
         })
         if (is.matrix(values)) {
             # in case of >1 return values of vfun
@@ -162,6 +163,105 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
     for (var in 1:length(outcomes)) {
         df[, outcomes[var]] <- m[, var]
     }
+
+    df
+}
+
+
+#' EXPERIMENTAL: Compute Sampled Shapley-Shorrocks Value Decompositions
+#'
+#'
+#' @param vfun A value function.
+#' @param factors A vector of factors, passed to \code{vfun}.
+#' @param last_n An integer that specifies on how many values the standard deviation of the last
+#'   samples is calculated.
+#' @param precision The stopping criterion.
+#' @param max_iter Maximum number of samples to be drawn for each factor. Should be reasonably large
+#'   and usually doesn't matter. To adjust computation speed,
+#'   it is preferred to adjust \code{precision}.
+#' @param silent If FALSE (the default), prints a progress bar.
+#' @param ... Additional arguments passed to \code{vfun}.
+#' @return Returns a data frame with N rows, where N is the number of factors.
+#' @references
+#' Shapley, L. S. (1953). A value for n-person games.
+#'      Contributions to the Theory of Games, 2(28), 307-317.
+#'
+#' Shorrocks, A. F. (2013).
+#'      Decomposition procedures for distributional analysis:
+#'      a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
+#' @export
+shapley_sampled <- function(vfun, factors,
+                            last_n = 100, precision = 1e-4, max_iter = 1e6, silent = FALSE, ...) {
+    cache <- new.env(hash = TRUE, parent = emptyenv())
+    get_from_cache <- function(indices) {
+        if (length(indices) == 0) {
+            # environments allow only character keys
+            key <- "0"
+        } else {
+            key <- paste0(indices, collapse = "")
+        }
+        if (exists(key, envir = cache)) {
+            get(key, envir = cache)
+        } else {
+            res <- vfun(unlist(factors)[indices], ...)
+            if (length(res) != 1) {
+                if (!silent) close(pb)
+                stop("vfun returned a != one value")
+            }
+            assign(key, res, envir = cache)
+            res
+        }
+    }
+
+    n_factors <- length(factors)
+
+    if (last_n <= 10) stop("last_n needs to be larger than 10")
+
+    contrib <- list()
+    means <- list()
+    for (factor in 1:n_factors) {
+        contrib[[factor]] <- vector(mode = "numeric")
+        means[[factor]] <- vector(mode = "numeric")
+    }
+
+    if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
+
+    for (factor in 1:n_factors) {
+        if (!silent) utils::setTxtProgressBar(pb, factor)
+
+        for (ordering in 1:max_iter) {
+            if (!silent & ordering %% 100 == 0) cat(".")
+            seq <- sample(1:n_factors)
+
+            ix <- which(seq == factor)
+            if (ix == 1) {
+                preceding <- c()
+            } else {
+                preceding <- seq[1:(ix - 1)]
+            }
+            contrib[[factor]][ordering] <-
+                get_from_cache(c(factor, preceding)) - get_from_cache(preceding)
+
+            means[[factor]][ordering] <- mean(contrib[[factor]])
+
+            if (ordering > last_n) {
+                last_nvalues <- tail(means[[factor]], last_n)
+                if (sd(last_nvalues) < precision) {
+                    break
+                }
+            }
+        }
+    }
+    if (!silent) close(pb)
+
+    df <- data.frame(factor = factors,
+        value = sapply(contrib, mean),
+        iterations = sapply(contrib, length),
+        means = I(means))
+
+    total_diff <- get_from_cache(1:length(factors)) - get_from_cache(c())
+    if (abs(log(total_diff / sum(df$value))) > log(1.05))
+        warning("Sum of values differs more than 5% from value function")
 
     df
 }
