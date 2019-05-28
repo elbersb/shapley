@@ -129,7 +129,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         group_indices <- as.numeric(rep(names(groups), lengths(groups)))
         if (length(subgroups) == 0) {
             df <- data.frame(group = group_indices,
-                factor = unlist(factors))
+                factor = unlist(factors), stringsAsFactors = FALSE)
         } else {
             # not the most elegant way to do it, but it works
             subgroup_indices <- group_indices * 10
@@ -152,10 +152,10 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 
             df <- data.frame(group = group_indices,
                 subgroup = subgroup_indices,
-                factor = unlist(factors))
+                factor = unlist(factors), stringsAsFactors = FALSE)
         }
     } else {
-        df <- data.frame(factor = factors)
+        df <- data.frame(factor = factors, stringsAsFactors = FALSE)
     }
 
     # add values
@@ -172,7 +172,8 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 #'
 #'
 #' @param vfun A value function.
-#' @param factors A vector of factors, passed to \code{vfun}.
+#' @param factors A vector of factors, passed to \code{vfun}. List for Owen values is allowed,
+#'    but only one level.'
 #' @param last_n An integer that specifies on how many values the standard deviation of the last
 #'   samples is calculated.
 #' @param precision The stopping criterion.
@@ -213,9 +214,13 @@ shapley_sampled <- function(vfun, factors,
         }
     }
 
-    n_factors <- length(factors)
+    n_factors <- length(unlist(factors))
+    if (is.list(factors)) {
+        group_size <- sapply(1:length(factors), function(i) length(unlist(factors[[i]])))
+        groups <- split(1:n_factors, rep(1:length(factors), group_size))
+    }
 
-    if (last_n <= 10) stop("last_n needs to be larger than 10")
+    if (last_n < 10) stop("last_n needs to be at least 10")
 
     contrib <- list()
     means <- list()
@@ -229,9 +234,14 @@ shapley_sampled <- function(vfun, factors,
     for (factor in 1:n_factors) {
         if (!silent) utils::setTxtProgressBar(pb, factor)
 
-        for (ordering in 1:max_iter) {
-            if (!silent & ordering %% 100 == 0) cat(".")
-            seq <- sample(1:n_factors)
+        for (n in 1:max_iter) {
+            if (!silent & n %% 100 == 0) cat(".")
+            if (is.list(factors)) {
+                group_order <- sample(1:length(groups))
+                seq <- unlist(lapply(group_order, function(gix) sample(groups[[gix]])))
+            } else {
+                seq <- sample(1:n_factors)
+            }
 
             ix <- which(seq == factor)
             if (ix == 1) {
@@ -239,14 +249,13 @@ shapley_sampled <- function(vfun, factors,
             } else {
                 preceding <- seq[1:(ix - 1)]
             }
-            contrib[[factor]][ordering] <-
-                get_from_cache(c(factor, preceding)) - get_from_cache(preceding)
+            contrib[[factor]][n] <- get_from_cache(c(factor, preceding)) - get_from_cache(preceding)
 
-            means[[factor]][ordering] <- mean(contrib[[factor]])
+            means[[factor]][n] <- mean(contrib[[factor]])
 
-            if (ordering > last_n) {
-                last_nvalues <- tail(means[[factor]], last_n)
-                if (sd(last_nvalues) < precision) {
+            if (n > last_n) {
+                last_nvalues <- utils::tail(means[[factor]], last_n)
+                if (stats::sd(last_nvalues) < precision) {
                     break
                 }
             }
@@ -254,14 +263,22 @@ shapley_sampled <- function(vfun, factors,
     }
     if (!silent) close(pb)
 
-    df <- data.frame(factor = factors,
-        value = sapply(contrib, mean),
-        iterations = sapply(contrib, length),
-        means = I(means))
+    if (is.list(factors)) {
+        group_indices <- as.numeric(rep(names(groups), lengths(groups)))
+        df <- data.frame(group_indices = group_indices,
+            factor = unlist(factors), stringsAsFactors = FALSE)
+    } else {
+        df <- data.frame(factor = unlist(factors), stringsAsFactors = FALSE)
+    }
+    df$value <- sapply(contrib, mean)
+    df$iterations <- sapply(contrib, length)
+    df$means <- I(means)
 
-    total_diff <- get_from_cache(1:length(factors)) - get_from_cache(c())
-    if (abs(log(total_diff / sum(df$value))) > log(1.05))
-        warning("Sum of values differs more than 5% from value function")
+    total_diff <- get_from_cache(1:n_factors) - get_from_cache(c())
+    ratio <- abs(log(total_diff / sum(df$value)))
+    if (ratio > log(1.01))
+        warning(paste0("Sum of values differs ~", round((exp(ratio) - 1) * 100),
+            "% from value function"))
 
     df
 }

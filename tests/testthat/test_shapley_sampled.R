@@ -10,13 +10,25 @@ reg <- function(regressors) {
 
 test_that("regression example", {
     expect_warning({
-        res <- shapley_sampled(reg,
+        res1 <- shapley_sampled(reg,
                 c("cyl", "disp", "hp", "drat", "wt", "qsec", "vs", "am", "gear", "carb"),
-                last_n = 50,
-                precision = .1,
+                last_n = 10,
+                precision = .01,
                 silent = TRUE)
     })
 
-    expect_equal(nrow(res), 10)
-    expect_equal(nrow(res), 10)
+    expect_equal(nrow(res1), 10)
+})
+
+test_that("regression example", {
+    res2 <- shapley(reg,
+              list(c("cyl", "disp", "hp", "drat"), c("qsec", "vs", "am", "gear")),
+              silent = TRUE)
+    expect_warning({
+        res3 <- shapley_sampled(reg,
+                  list(c("cyl", "disp", "hp", "drat"), c("qsec", "vs", "am", "gear")),
+                  precision = .001,
+                  silent = TRUE)
+    })
+    expect_lt(mean(exp(abs(log(res2$value / res3$value)))), 1.10)
 })

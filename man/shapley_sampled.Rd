@@ -10,7 +10,8 @@ shapley_sampled(vfun, factors, last_n = 100, precision = 1e-04,
 \arguments{
 \item{vfun}{A value function.}
 
-\item{factors}{A vector of factors, passed to \code{vfun}.}
+\item{factors}{A vector of factors, passed to \code{vfun}. List for Owen values is allowed,
+but only one level.'}
 
 \item{last_n}{An integer that specifies on how many values the standard deviation of the last
 samples is calculated.}
