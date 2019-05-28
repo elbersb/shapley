@@ -27,8 +27,8 @@ test_that("regression example", {
     expect_warning({
         res3 <- shapley_sampled(reg,
                   list(c("cyl", "disp", "hp", "drat"), c("qsec", "vs", "am", "gear")),
-                  precision = .001,
+                  precision = .05,
                   silent = TRUE)
     })
-    expect_lt(mean(exp(abs(log(res2$value / res3$value)))), 1.10)
+    expect_lt(mean(exp(abs(log(res2$value / res3$value)))), 1.20)
 })

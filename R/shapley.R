@@ -277,7 +277,8 @@ shapley_sampled <- function(vfun, factors,
     total_diff <- get_from_cache(1:n_factors) - get_from_cache(c())
     ratio <- abs(log(total_diff / sum(df$value)))
     if (ratio > log(1.01))
-        warning(paste0("Sum of values differs ~", round((exp(ratio) - 1) * 100),
+        pct <- (exp(ratio) - 1) * 100
+        warning(paste0("Sum of values differs ~", round(pct),
             "% from value function"))
 
     df
