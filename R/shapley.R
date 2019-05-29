@@ -276,6 +276,8 @@ shapley_sampled <- function(vfun, factors,
 
     total_diff <- get_from_cache(1:n_factors) - get_from_cache(c())
     print(df)
+    print(total_diff)
+    print(sum(df$value))
     ratio <- abs(log(total_diff / sum(df$value)))
     if (ratio > log(1.01)) {
         pct <- (exp(ratio) - 1) * 100
