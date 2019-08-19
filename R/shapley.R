@@ -20,27 +20,17 @@ collapse <- function(x) paste0(x, collapse = "")
 #'      Decomposition procedures for distributional analysis:
 #'      a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
 #' @import arrangements
+#' @import memoise
 #' @export
 shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
-    cache <- new.env(hash = TRUE, parent = emptyenv())
-    get_from_cache <- function(indices) {
-        if (length(indices) == 0) {
-            # environments allow only character keys
-            key <- "0"
-        } else {
-            key <- paste0(indices, collapse = "")
+    memoised_vfun <- memoise::memoise(vfun)
+    get_vfun <- function(indices) {
+        res <- memoised_vfun(unlist(factors)[indices], ...)
+        if (length(res) != length(outcomes)) {
+            if (!silent) close(pb)
+            stop("vfun returned a different number of values than defined in outcomes")
         }
-        if (exists(key, envir = cache)) {
-            get(key, envir = cache)
-        } else {
-            res <- vfun(unlist(factors)[indices], ...)
-            if (length(res) != length(outcomes)) {
-                if (!silent) close(pb)
-                stop("vfun returned a different number of values than defined in outcomes")
-            }
-            assign(key, res, envir = cache)
-            res
-        }
+        res
     }
 
     if (is.list(factors)) {
@@ -112,7 +102,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         preceding <- lapply(preceding, sort.int)
 
         values <- sapply(preceding, function(fs) {
-            get_from_cache(fs) - get_from_cache(fs[fs != factor])
+            get_vfun(fs) - get_vfun(fs[fs != factor])
         })
         if (is.matrix(values)) {
             # in case of >1 return values of vfun
@@ -164,6 +154,7 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
         df[, outcomes[var]] <- m[, var]
     }
 
+    memoise::forget(memoised_vfun)
     df
 }
 
@@ -193,25 +184,9 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 #' @export
 shapley_sampled <- function(vfun, factors,
                             last_n = 100, precision = 1e-4, max_iter = 1e6, silent = FALSE, ...) {
-    cache <- new.env(hash = TRUE, parent = emptyenv())
-    get_from_cache <- function(indices) {
-        if (length(indices) == 0) {
-            # environments allow only character keys
-            key <- "0"
-        } else {
-            key <- paste0(indices, collapse = "")
-        }
-        if (exists(key, envir = cache)) {
-            get(key, envir = cache)
-        } else {
-            res <- vfun(unlist(factors)[indices], ...)
-            if (length(res) != 1) {
-                if (!silent) close(pb)
-                stop("vfun returned a != one value")
-            }
-            assign(key, res, envir = cache)
-            res
-        }
+    memoised_vfun <- memoise::memoise(vfun)
+    get_vfun <- function(indices) {
+        memoised_vfun(unlist(factors)[indices], ...)
     }
 
     n_factors <- length(unlist(factors))
@@ -249,7 +224,7 @@ shapley_sampled <- function(vfun, factors,
             } else {
                 preceding <- seq[1:(ix - 1)]
             }
-            contrib[[factor]][n] <- get_from_cache(c(factor, preceding)) - get_from_cache(preceding)
+            contrib[[factor]][n] <- get_vfun(c(factor, preceding)) - get_vfun(preceding)
 
             means[[factor]][n] <- mean(contrib[[factor]])
 
@@ -274,5 +249,6 @@ shapley_sampled <- function(vfun, factors,
     df$iterations <- sapply(contrib, length)
     df$means <- I(means)
 
+    memoise::forget(memoised_vfun)
     df
 }

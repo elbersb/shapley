@@ -3,3 +3,4 @@
 export(shapley)
 export(shapley_sampled)
 import(arrangements)
+import(memoise)
