@@ -15,4 +15,4 @@ Suggests:
     testthat,
     covr,
     lintr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

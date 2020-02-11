@@ -43,9 +43,9 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 
         # get all permutations *within* groups (give as vector)
         # TODO: this doesnt work if these are large - have to use different approach here
-        group_perms <- lapply(groups, function(g) arrangements::permutations(v = g, length(g)))
+        group_perms <- lapply(groups, function(g) arrangements::permutations(v = g, n = length(g)))
         # then only the groups "play" against each other
-        perms <- arrangements::permutations(v = 1:length(groups), length(groups))
+        perms <- arrangements::permutations(v = 1:length(groups), n = length(groups))
         expand_grid_df <- function(...) Reduce(function(...) merge(..., by = NULL), ...)
 
         # the perms matrix indicates group indices, adjust and then expand the two matrices
