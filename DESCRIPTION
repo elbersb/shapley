@@ -13,6 +13,5 @@ LazyData: true
 Imports: arrangements, memoise
 Suggests:
     testthat,
-    covr,
-    lintr
+    covr
 RoxygenNote: 7.0.2
