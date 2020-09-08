@@ -159,12 +159,13 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 }
 
 
-#' EXPERIMENTAL: Compute Sampled Shapley-Shorrocks Value Decompositions
+#' Compute Sampled Shapley-Shorrocks Value Decompositions
 #'
 #'
 #' @param vfun A value function.
 #' @param factors A vector of factors, passed to \code{vfun}. List for Owen values is allowed,
-#'    but only one level.'
+#'    but only one level.
+#' @param outcomes Column names for outcome values (usually this is only one).
 #' @param last_n An integer that specifies on how many values the standard deviation of the last
 #'   samples is calculated.
 #' @param precision The stopping criterion.
@@ -182,12 +183,18 @@ shapley <- function(vfun, factors, outcomes = "value", silent = FALSE, ...) {
 #'      Decomposition procedures for distributional analysis:
 #'      a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
 #' @export
-shapley_sampled <- function(vfun, factors,
+shapley_sampled <- function(vfun, factors, outcomes = "value",
                             last_n = 100, precision = 1e-4, max_iter = 1e6, silent = FALSE, ...) {
     memoised_vfun <- memoise::memoise(vfun)
     get_vfun <- function(indices) {
-        memoised_vfun(unlist(factors)[indices], ...)
+        res <- memoised_vfun(unlist(factors)[indices], ...)
+        if (length(res) != length(outcomes)) {
+            if (!silent) close(pb)
+            stop("vfun returned a different number of values than defined in outcomes")
+        }
+        res
     }
+
 
     n_factors <- length(unlist(factors))
     if (is.list(factors)) {
@@ -199,9 +206,13 @@ shapley_sampled <- function(vfun, factors,
 
     contrib <- list()
     means <- list()
-    for (factor in 1:n_factors) {
-        contrib[[factor]] <- vector(mode = "numeric")
-        means[[factor]] <- vector(mode = "numeric")
+    for (outcome in 1:length(outcomes)) {
+        contrib[[outcome]] <- list()
+        means[[outcome]] <- list()
+        for (factor in 1:n_factors) {
+            contrib[[outcome]][[factor]] <- vector(mode = "numeric")
+            means[[outcome]][[factor]] <- vector(mode = "numeric")
+        }
     }
 
     if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
@@ -224,13 +235,16 @@ shapley_sampled <- function(vfun, factors,
             } else {
                 preceding <- seq[1:(ix - 1)]
             }
-            contrib[[factor]][n] <- get_vfun(c(factor, preceding)) - get_vfun(preceding)
-
-            means[[factor]][n] <- mean(contrib[[factor]])
+            results <- get_vfun(c(factor, preceding)) - get_vfun(preceding)
+            for (outcome in 1:length(outcomes)) {
+                contrib[[outcome]][[factor]][n] <- results[[outcome]]
+                means[[outcome]][[factor]][n] <- mean(contrib[[outcome]][[factor]])
+            }
 
             if (n > last_n) {
-                last_nvalues <- utils::tail(means[[factor]], last_n)
-                if (stats::sd(last_nvalues) < precision) {
+                sd_nvalues <- lapply(1:length(outcomes),
+                    function(outcome) stats::sd(utils::tail(means[[outcome]][[factor]], last_n)))
+                if (all(unlist(sd_nvalues) < precision)) {
                     break
                 }
             }
@@ -245,9 +259,12 @@ shapley_sampled <- function(vfun, factors,
     } else {
         df <- data.frame(factor = unlist(factors), stringsAsFactors = FALSE)
     }
-    df$value <- sapply(contrib, mean)
-    df$iterations <- sapply(contrib, length)
-    df$means <- I(means)
+    for (outcome in 1:length(outcomes)) {
+        df[[outcomes[[outcome]]]] <- sapply(contrib[[outcome]], mean)
+    }
+
+    df$iterations <- sapply(contrib[[1]], length)
+    attr(df, "means") <- I(means)
 
     memoise::forget(memoised_vfun)
     df

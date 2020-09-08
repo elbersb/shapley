@@ -2,16 +2,26 @@
 % Please edit documentation in R/shapley.R
 \name{shapley_sampled}
 \alias{shapley_sampled}
-\title{EXPERIMENTAL: Compute Sampled Shapley-Shorrocks Value Decompositions}
+\title{Compute Sampled Shapley-Shorrocks Value Decompositions}
 \usage{
-shapley_sampled(vfun, factors, last_n = 100, precision = 1e-04,
-  max_iter = 1e+06, silent = FALSE, ...)
+shapley_sampled(
+  vfun,
+  factors,
+  outcomes = "value",
+  last_n = 100,
+  precision = 1e-04,
+  max_iter = 1e+06,
+  silent = FALSE,
+  ...
+)
 }
 \arguments{
 \item{vfun}{A value function.}
 
 \item{factors}{A vector of factors, passed to \code{vfun}. List for Owen values is allowed,
-but only one level.'}
+but only one level.}
+
+\item{outcomes}{Column names for outcome values (usually this is only one).}
 
 \item{last_n}{An integer that specifies on how many values the standard deviation of the last
 samples is calculated.}
@@ -30,7 +40,7 @@ it is preferred to adjust \code{precision}.}
 Returns a data frame with N rows, where N is the number of factors.
 }
 \description{
-EXPERIMENTAL: Compute Sampled Shapley-Shorrocks Value Decompositions
+Compute Sampled Shapley-Shorrocks Value Decompositions
 }
 \references{
 Shapley, L. S. (1953). A value for n-person games.

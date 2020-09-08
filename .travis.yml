@@ -1,7 +1,8 @@
 language: r
 cache: packages
+env:
+  - _R_CHECK_SYSTEM_CLOCK_=0
 r_packages:
   - covr
-  - lintr
 after_success:
   - Rscript -e 'covr::codecov()'
