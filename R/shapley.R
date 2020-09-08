@@ -195,7 +195,6 @@ shapley_sampled <- function(vfun, factors, outcomes = "value",
         res
     }
 
-
     n_factors <- length(unlist(factors))
     if (is.list(factors)) {
         group_size <- sapply(1:length(factors), function(i) length(unlist(factors[[i]])))
@@ -218,8 +217,6 @@ shapley_sampled <- function(vfun, factors, outcomes = "value",
     if (!silent) pb <- utils::txtProgressBar(min = 0, max = n_factors, style = 3)
 
     for (factor in 1:n_factors) {
-        if (!silent) utils::setTxtProgressBar(pb, factor)
-
         for (n in 1:max_iter) {
             if (!silent & n %% 100 == 0) cat(".")
             if (is.list(factors)) {
@@ -249,6 +246,7 @@ shapley_sampled <- function(vfun, factors, outcomes = "value",
                 }
             }
         }
+        if (!silent) utils::setTxtProgressBar(pb, factor)
     }
     if (!silent) close(pb)
 
@@ -259,12 +257,15 @@ shapley_sampled <- function(vfun, factors, outcomes = "value",
     } else {
         df <- data.frame(factor = unlist(factors), stringsAsFactors = FALSE)
     }
+    iterations <- sapply(contrib[[1]], length)
     for (outcome in 1:length(outcomes)) {
-        df[[outcomes[[outcome]]]] <- sapply(contrib[[outcome]], mean)
+        col_outcome <- outcomes[[outcome]]
+        col_outcome_se <- paste0(col_outcome, "_se")
+        df[[col_outcome]] <- sapply(contrib[[outcome]], mean)
+        df[[col_outcome_se]] <- sqrt(sapply(contrib[[outcome]], stats::var) / iterations)
     }
-
-    df$iterations <- sapply(contrib[[1]], length)
-    attr(df, "means") <- I(means)
+    df$iterations <- iterations
+    attr(df, "contrib") <- I(contrib)
 
     memoise::forget(memoised_vfun)
     df
