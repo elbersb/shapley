@@ -2,17 +2,14 @@
 % Please edit documentation in R/shapley.R
 \name{shapley}
 \alias{shapley}
-\title{Compute Shapley-Shorrocks Value Decompositions}
+\title{Compute Shapley Value Decompositions}
 \usage{
 shapley(vfun, factors, outcomes = "value", silent = FALSE, ...)
 }
 \arguments{
 \item{vfun}{A value function.}
 
-\item{factors}{A vector of factors, passed to \code{vfun}. Owen value decomposition can be
-can be achieved by passing a list of vectors, where then each item of the list is treated
-as one group. This list also can contain further lists, defining subgroups. Only two levels
-of nesting are currently supported.}
+\item{factors}{A vector of factors, passed to \code{vfun}.}
 
 \item{outcomes}{Column names for outcome values (usually this is only one).}
 
@@ -24,7 +21,7 @@ of nesting are currently supported.}
 Returns a data frame with N rows, where N is the number of factors.
 }
 \description{
-Compute Shapley-Shorrocks Value Decompositions
+Compute Shapley Value Decompositions
 }
 \references{
 Shapley, L. S. (1953). A value for n-person games.

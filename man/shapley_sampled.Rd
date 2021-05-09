@@ -2,7 +2,7 @@
 % Please edit documentation in R/shapley.R
 \name{shapley_sampled}
 \alias{shapley_sampled}
-\title{Compute Sampled Shapley-Shorrocks Value Decompositions}
+\title{Compute Sampled Shapley/Owen Value Decompositions}
 \usage{
 shapley_sampled(
   vfun,
@@ -36,17 +36,6 @@ it is preferred to adjust \code{precision}.}
 
 \item{...}{Additional arguments passed to \code{vfun}.}
 }
-\value{
-Returns a data frame with N rows, where N is the number of factors.
-}
 \description{
-Compute Sampled Shapley-Shorrocks Value Decompositions
-}
-\references{
-Shapley, L. S. (1953). A value for n-person games.
-     Contributions to the Theory of Games, 2(28), 307-317.
-
-Shorrocks, A. F. (2013).
-     Decomposition procedures for distributional analysis:
-     a unified framework based on the Shapley value. Journal of Economic Inequality, 1-28.
+Compute Sampled Shapley/Owen Value Decompositions
 }

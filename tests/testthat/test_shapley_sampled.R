@@ -19,7 +19,7 @@ test_that("regression example", {
 })
 
 test_that("regression example", {
-    res2 <- shapley(reg,
+    res2 <- owen(reg,
               list(c("cyl", "disp", "hp", "drat"), c("qsec", "vs", "am", "gear")),
               silent = TRUE)
     res3 <- shapley_sampled(reg,

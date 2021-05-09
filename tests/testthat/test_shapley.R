@@ -104,7 +104,7 @@ test_that("additional arguments to vfun", {
         FinalIncome = c(5, 22, 30, 38, 46))
 
     res1 <- shapley(zid, c("Tax", "Transfer"), silent = TRUE, data = income1)
-    res2 <- shapley(zid, list(c("Tax1", "Tax2"), "Transfer"), silent = TRUE, data = income2)
+    res2 <- owen(zid, list(c("Tax1", "Tax2"), "Transfer"), silent = TRUE, data = income2)
     expect_equal(res1$value[[1]], sum(res2$value[1:2]))
     expect_equal(res1$value[[2]], sum(res2$value[[3]]))
 })

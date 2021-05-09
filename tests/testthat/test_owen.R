@@ -21,7 +21,7 @@ test_that("rego example", {
     expect_equal(res$value, c(.34, .16, .22))
 
     # with grouping
-    res <- shapley(ex, list(1, c(2, 3)), silent = TRUE)
+    res <- owen(ex, list(1, c(2, 3)), silent = TRUE)
     expect_equal(res$group, c(1, 2, 2))
     expect_equal(res$value, c(.33, .165, .225))
 
@@ -48,14 +48,14 @@ test_that("regression example", {
     # all groups only one factor
     expect_equal(
         shapley(reg, c("cyl", "disp", "hp"), silent = TRUE)$value,
-        shapley(reg, list("cyl", "disp", "hp"), silent = TRUE)$value)
+        owen(reg, list("cyl", "disp", "hp"), silent = TRUE)$value)
 
-    shapley(reg, list("cyl", list("disp"), "hp"), silent = TRUE)
+    owen(reg, list("cyl", list("disp"), "hp"), silent = TRUE)
 
     # three groups
     ungrouped <- shapley(reg, c("cyl", "disp", "hp", "drat", "wt", "qsec"),
         silent = TRUE)
-    with_groups <- shapley(reg, list(c("cyl"), c("disp", "hp", "drat"), c("wt", "qsec")),
+    with_groups <- owen(reg, list(c("cyl"), c("disp", "hp", "drat"), c("wt", "qsec")),
         silent = TRUE)
     supergroups <- shapley(reg, c("cyl", "disp+hp+drat", "wt+qsec"),
         silent = TRUE)
@@ -69,11 +69,11 @@ test_that("regression example", {
 test_that("Owen with two levels", {
     expect_equal(
         shapley(reg, c("cyl", "disp", "hp"), silent = TRUE)$value,
-        shapley(reg, list("cyl", list("disp"), "hp"), silent = TRUE)$value)
+        owen(reg, list("cyl", list("disp"), "hp"), silent = TRUE)$value)
 
     supergroups <- shapley(reg, c("cyl", "disp+hp+drat", "gear+wt+qsec"),
         silent = TRUE)
-    two_levels <- shapley(reg,
+    two_levels <- owen(reg,
             list("cyl",
                  list("disp", c("hp", "drat")),
                  list("gear", c("wt", "qsec"))),
@@ -83,7 +83,7 @@ test_that("Owen with two levels", {
     expect_equal(supergroups$value[2], sum(two_levels$value[2:4]))
     expect_equal(supergroups$value[3], sum(two_levels$value[5:7]))
 
-    supergroups2 <- shapley(reg, list("cyl", list("disp", "hp+drat"), list("gear", "wt+qsec")),
+    supergroups2 <- owen(reg, list("cyl", list("disp", "hp+drat"), list("gear", "wt+qsec")),
         silent = TRUE)
     expect_equal(supergroups2$value[1], two_levels$value[[1]])
     expect_equal(supergroups2$value[2], two_levels$value[[2]])
@@ -94,12 +94,30 @@ test_that("Owen with two levels", {
 
 test_that("Three levels", {
     # this is ok
-    shapley(function(x) 1, list(
+    owen(function(x) 1, list(
         list(c(1, 2, 3), c(4)),
         c(5, 6)), silent = TRUE)
 
     # this is not ok (grouping 2, 3 in their own sub-sub-group)
-    expect_error(shapley(function(x) 1, list(
+    expect_error(owen(function(x) 1, list(
         list(list(1, list(2, 3)), c(4)),
         list(5, 6)), silent = TRUE))
 })
+
+test_that("Owen 1977 examples", {
+    three <- function(f) {
+        if (length(f) == 0) return(0)
+        if (length(f) == 1) return(0)
+        if (length(f) == 2 & 2 %in% f & 3 %in% f) return(0)
+        if (length(f) == 2 & 1 %in% f & 2 %in% f) return(80)
+        if (length(f) == 2 & 1 %in% f & 3 %in% f) return(100)
+        if (length(f) == 3) return(100)
+    }
+    expect_equal(round(shapley(three, 1:3, silent = TRUE)$value), c(63, 13, 23))
+
+    expect_equal(owen(three, list(c(1, 2), 3), silent = TRUE)$value, c(70, 20, 10))
+    expect_equal(owen(three, list(c(1, 3), 2), silent = TRUE)$value, c(70, 30, 0))
+    expect_equal(owen(three, list(1, c(2, 3)), silent = TRUE)$value, c(50, 20, 30))
+})
+
+

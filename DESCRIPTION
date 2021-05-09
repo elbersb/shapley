@@ -10,8 +10,8 @@ Encoding: UTF-8
 URL: http://github.com/elbersb/shapley
 BugReports: http://github.com/elbersb/shapley/issues
 LazyData: true
-Imports: arrangements, memoise
+Imports: arrangements, memoise, purrr
 Suggests:
     testthat,
     covr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
