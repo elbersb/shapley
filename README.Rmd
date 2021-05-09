@@ -17,7 +17,7 @@ library("shapley")
 # shapley
 
 [![CRAN Version](https://www.r-pkg.org/badges/version/shapley)](https://CRAN.R-project.org/package=shapley)
-[![Build Status](https://travis-ci.org/elbersb/shapley.svg?branch=master)](https://travis-ci.org/elbersb/shapley)
+[![R-CMD-check](https://github.com/elbersb/shapley/workflows/R-CMD-check/badge.svg)](https://github.com/elbersb/shapley/actions)
 [![Coverage status](https://codecov.io/gh/elbersb/shapley/branch/master/graph/badge.svg)](https://codecov.io/github/elbersb/shapley?branch=master)
 
 The Shapley value is a concept from game theory that quantifies how much each player contributes
@@ -257,7 +257,7 @@ When we now decompose this dataset (`income2`) by three factors, we get the foll
 ```{r}
 # we can reuse the `zid` function from above,
 # while the `eid` function would need to be adapted
-shapley(zid, c("Tax1", "Tax2", "Transfer"), silent = TRUE, data = income2)
+owen(zid, c("Tax1", "Tax2", "Transfer"), silent = TRUE, data = income2)
 ```
 
 Note that the sum of the contributions of the two taxes does not equal the contribution for
@@ -276,7 +276,7 @@ a new set of problems, though.) The `shapley` package allows the computation of 
 specifying the group structure using a list of vectors:
 
 ```{r}
-shapley(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = income2)
+owen(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = income2)
 ```
 
 Using this notation, we have grouped `Tax1` and `Tax2` together in one group, while `Transfer` is a

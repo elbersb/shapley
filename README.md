@@ -5,8 +5,7 @@
 
 [![CRAN
 Version](https://www.r-pkg.org/badges/version/shapley)](https://CRAN.R-project.org/package=shapley)
-[![Build
-Status](https://travis-ci.org/elbersb/shapley.svg?branch=master)](https://travis-ci.org/elbersb/shapley)
+[![R-CMD-check](https://github.com/elbersb/shapley/workflows/R-CMD-check/badge.svg)](https://github.com/elbersb/shapley/actions)
 [![Coverage
 status](https://codecov.io/gh/elbersb/shapley/branch/master/graph/badge.svg)](https://codecov.io/github/elbersb/shapley?branch=master)
 
@@ -184,12 +183,12 @@ taxes paid, transfers received, and the resulting final incomes for five
 individuals:
 
 | MarketIncome | Tax | Transfer | FinalIncome |
-| -----------: | --: | -------: | ----------: |
-|            1 | \-5 |        9 |           5 |
-|           20 | \-5 |        7 |          22 |
-|           30 | \-5 |        5 |          30 |
-|           40 | \-5 |        3 |          38 |
-|           50 | \-5 |        1 |          46 |
+|-------------:|----:|---------:|------------:|
+|            1 |  -5 |        9 |           5 |
+|           20 |  -5 |        7 |          22 |
+|           30 |  -5 |        5 |          30 |
+|           40 |  -5 |        3 |          38 |
+|           50 |  -5 |        1 |          46 |
 
 The Gini indices of the market and final incomes are:
 
@@ -285,12 +284,12 @@ two different taxes, `Tax1` and `Tax2` (these two columns sum to the
 column `Tax` in the previous example):
 
 | MarketIncome | Tax1 | Tax2 | Transfer | FinalIncome |
-| -----------: | ---: | ---: | -------: | ----------: |
-|            1 |    0 |  \-5 |        9 |           5 |
-|           20 |  \-1 |  \-4 |        7 |          22 |
-|           30 |  \-2 |  \-3 |        5 |          30 |
-|           40 |  \-3 |  \-2 |        3 |          38 |
-|           50 |  \-4 |  \-1 |        1 |          46 |
+|-------------:|-----:|-----:|---------:|------------:|
+|            1 |    0 |   -5 |        9 |           5 |
+|           20 |   -1 |   -4 |        7 |          22 |
+|           30 |   -2 |   -3 |        5 |          30 |
+|           40 |   -3 |   -2 |        3 |          38 |
+|           50 |   -4 |   -1 |        1 |          46 |
 
 When we now decompose this dataset (`income2`) by three factors, we get
 the following results:
@@ -298,7 +297,7 @@ the following results:
 ``` r
 # we can reuse the `zid` function from above,
 # while the `eid` function would need to be adapted
-shapley(zid, c("Tax1", "Tax2", "Transfer"), silent = TRUE, data = income2)
+owen(zid, c("Tax1", "Tax2", "Transfer"), silent = TRUE, data = income2)
 #>     factor        value
 #> 1     Tax1 -0.006012472
 #> 2     Tax2  0.062502480
@@ -324,7 +323,7 @@ computation of Owen values by specifying the group structure using a
 list of vectors:
 
 ``` r
-shapley(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = income2)
+owen(zid, list(c("Tax1", "Tax2"), c("Transfer")), silent = TRUE, data = income2)
 #>   group   factor       value
 #> 1     1     Tax1 -0.00575388
 #> 2     1     Tax2  0.06276107
@@ -338,11 +337,11 @@ were jointly entered as a single factor.
 
 Note that the hierarchical procedure can also be used as an effective
 tool to increase the speed of computation when a large number of factors
-is included. For instance, when 8 factors are considered, 8\! = 40320
+is included. For instance, when 8 factors are considered, 8! = 40320
 permutations need to be calculated for each factor. Once the 8 factors
 are grouped into two groups with 4 factors each, the number of
-permutations that need to be calculated for each factor is only 2\! \*
-4\! \* 4\! = 1152.
+permutations that need to be calculated for each factor is only 2! \* 4!
+\* 4! = 1152.
 
 ## References
 
