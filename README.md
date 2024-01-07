@@ -3,8 +3,6 @@
 
 # shapley
 
-[![CRAN
-Version](https://www.r-pkg.org/badges/version/shapley)](https://CRAN.R-project.org/package=shapley)
 [![R-CMD-check](https://github.com/elbersb/shapley/workflows/R-CMD-check/badge.svg)](https://github.com/elbersb/shapley/actions)
 [![Coverage
 status](https://codecov.io/gh/elbersb/shapley/branch/master/graph/badge.svg)](https://codecov.io/github/elbersb/shapley?branch=master)
